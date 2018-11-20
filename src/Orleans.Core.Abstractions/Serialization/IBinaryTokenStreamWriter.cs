@@ -140,5 +140,12 @@ namespace Orleans.Serialization
         /// <param name="obj">Input object to be written to the output stream.</param>
         /// <returns>Returns <c>true</c> if the value was successfully written to the output stream.</returns>
         bool TryWriteSimpleObject(object obj);
+
+        /// <summary>
+        /// Try to write a simple type (non-array) value to the stream.
+        /// </summary>
+        /// <param name="value">Input object to be written to the output stream.</param>
+        /// <returns>Returns <c>true</c> if the value was successfully written to the output stream.</returns>
+        bool TryWriteSimpleStruct<T>(T value);
     }
 }

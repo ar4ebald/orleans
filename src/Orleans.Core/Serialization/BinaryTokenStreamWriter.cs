@@ -138,30 +138,37 @@ namespace Orleans.Serialization
             typeTokens[typeof(Tuple<,,,,,,>).TypeHandle] = SerializationTokenType.Tuple + 7;
 
             writers = new Dictionary<RuntimeTypeHandle, Action<BinaryTokenStreamWriter, object>>(RuntimeTypeHandlerEqualityComparer.Instance);
-            writers[typeof(bool).TypeHandle] = (stream, obj) => stream.Write((bool) obj);
-            writers[typeof(int).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Int); stream.Write((int) obj); };
-            writers[typeof(uint).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Uint); stream.Write((uint) obj); };
-            writers[typeof(short).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Short); stream.Write((short) obj); };
-            writers[typeof(ushort).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Ushort); stream.Write((ushort) obj); };
-            writers[typeof(long).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Long); stream.Write((long) obj); };
-            writers[typeof(ulong).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Ulong); stream.Write((ulong) obj); };
-            writers[typeof(byte).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Byte); stream.Write((byte) obj); };
-            writers[typeof(sbyte).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Sbyte); stream.Write((sbyte) obj); };
-            writers[typeof(float).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Float); stream.Write((float) obj); };
-            writers[typeof(double).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Double); stream.Write((double) obj); };
-            writers[typeof(decimal).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Decimal); stream.Write((decimal)obj); };
-            writers[typeof(string).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.String); stream.Write((string)obj); };
-            writers[typeof(char).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Character); stream.Write((char) obj); };
-            writers[typeof(Guid).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Guid); stream.Write((Guid) obj); };
-            writers[typeof(DateTime).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.Date); stream.Write((DateTime) obj); };
-            writers[typeof(TimeSpan).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.TimeSpan); stream.Write((TimeSpan) obj); };
-            writers[typeof(GrainId).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.GrainId); stream.Write((GrainId) obj); };
-            writers[typeof(ActivationId).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.ActivationId); stream.Write((ActivationId) obj); };
-            writers[typeof(SiloAddress).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.SiloAddress); stream.Write((SiloAddress) obj); };
-            writers[typeof(ActivationAddress).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.ActivationAddress); stream.Write((ActivationAddress) obj); };
-            writers[typeof(IPAddress).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.IpAddress); stream.Write((IPAddress) obj); };
-            writers[typeof(IPEndPoint).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.IpEndPoint); stream.Write((IPEndPoint) obj); };
-            writers[typeof(CorrelationId).TypeHandle] = (stream, obj) => { stream.Write(SerializationTokenType.CorrelationId); stream.Write((CorrelationId) obj); };
+
+            void AddWriter<T>(Action<BinaryTokenStreamWriter, T> writer)
+            {
+                StaticWriters<T>.Instance = writer;
+                writers[typeof(T).TypeHandle] = (stream, obj) => writer(stream, (T)obj);
+            }
+
+            AddWriter<bool>((stream, value) => stream.Write(value));
+            AddWriter<int>((stream, obj) => { stream.Write(SerializationTokenType.Int); stream.Write(obj); });
+            AddWriter<uint>((stream, obj) => { stream.Write(SerializationTokenType.Uint); stream.Write(obj); });
+            AddWriter<short>((stream, obj) => { stream.Write(SerializationTokenType.Short); stream.Write(obj); });
+            AddWriter<ushort>((stream, obj) => { stream.Write(SerializationTokenType.Ushort); stream.Write(obj); });
+            AddWriter<long>((stream, obj) => { stream.Write(SerializationTokenType.Long); stream.Write(obj); });
+            AddWriter<ulong>((stream, obj) => { stream.Write(SerializationTokenType.Ulong); stream.Write(obj); });
+            AddWriter<byte>((stream, obj) => { stream.Write(SerializationTokenType.Byte); stream.Write(obj); });
+            AddWriter<sbyte>((stream, obj) => { stream.Write(SerializationTokenType.Sbyte); stream.Write(obj); });
+            AddWriter<float>((stream, obj) => { stream.Write(SerializationTokenType.Float); stream.Write(obj); });
+            AddWriter<double>((stream, obj) => { stream.Write(SerializationTokenType.Double); stream.Write(obj); });
+            AddWriter<decimal>((stream, obj) => { stream.Write(SerializationTokenType.Decimal); stream.Write(obj); });
+            AddWriter<string>((stream, obj) => { stream.Write(SerializationTokenType.String); stream.Write(obj); });
+            AddWriter<char>((stream, obj) => { stream.Write(SerializationTokenType.Character); stream.Write(obj); });
+            AddWriter<Guid>((stream, obj) => { stream.Write(SerializationTokenType.Guid); stream.Write(obj); });
+            AddWriter<DateTime>((stream, obj) => { stream.Write(SerializationTokenType.Date); stream.Write(obj); });
+            AddWriter<TimeSpan>((stream, obj) => { stream.Write(SerializationTokenType.TimeSpan); stream.Write(obj); });
+            AddWriter<GrainId>((stream, obj) => { stream.Write(SerializationTokenType.GrainId); stream.Write(obj); });
+            AddWriter<ActivationId>((stream, obj) => { stream.Write(SerializationTokenType.ActivationId); stream.Write(obj); });
+            AddWriter<SiloAddress>((stream, obj) => { stream.Write(SerializationTokenType.SiloAddress); stream.Write(obj); });
+            AddWriter<ActivationAddress>((stream, obj) => { stream.Write(SerializationTokenType.ActivationAddress); stream.Write(obj); });
+            AddWriter<IPAddress>((stream, obj) => { stream.Write(SerializationTokenType.IpAddress); stream.Write(obj); });
+            AddWriter<IPEndPoint>((stream, obj) => { stream.Write(SerializationTokenType.IpEndPoint); stream.Write(obj); });
+            AddWriter<CorrelationId>((stream, obj) => { stream.Write(SerializationTokenType.CorrelationId); stream.Write(obj); });
         }
 
         /// <summary> Default constructor. </summary>
@@ -551,6 +558,21 @@ namespace Orleans.Serialization
             return false;
         }
 
+        /// <summary>
+        /// Try to write a simple type (non-array) value to the stream.
+        /// </summary>
+        /// <param name="value">Input object to be written to the output stream.</param>
+        /// <returns>Returns <c>true</c> if the value was successfully written to the output stream.</returns>
+        public bool TryWriteSimpleStruct<T>(T value)
+        {
+            var writer = StaticWriters<T>.Instance;
+            if (writer == null)
+                return false;
+
+            writer(this, value);
+            return true;
+        }
+
         // General containers
 
         private StreamWriter trace;
@@ -567,6 +589,12 @@ namespace Orleans.Serialization
             trace.Write(format, args);
             trace.WriteLine(" at offset {0}", CurrentOffset);
             trace.Flush();
+        }
+
+
+        private static class StaticWriters<T>
+        {
+            public static Action<BinaryTokenStreamWriter, T> Instance;
         }
     }
 }

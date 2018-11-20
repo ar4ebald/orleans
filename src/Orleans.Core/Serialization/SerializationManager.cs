@@ -962,6 +962,71 @@ namespace Orleans.Serialization
                 + ". Perhaps you need to mark it [Serializable] or define a custom serializer for it?");
         }
 
+        /// <summary>
+        /// Encodes the object to the provided binary token stream.
+        /// </summary>
+        /// <param name="value">The input data to be serialized.</param>
+        /// <param name="context">The serialization context.</param>
+        /// <param name="expected">Current expected Type on this stream.</param>
+        [SuppressMessage("Microsoft.Usage", "CA2201:DoNotRaiseReservedExceptionTypes")]
+        public static void SerializeInnerValueType<T>(T value, ISerializationContext context, Type expected)
+        {
+            var sm = context.GetSerializationManager();
+            var writer = context.StreamWriter;
+
+            var t = typeof(T);
+            var typeInfo = t.GetTypeInfo();
+
+            // Enums are extra-special
+            if (typeInfo.IsEnum)
+            {
+                writer.WriteTypeHeader(t, expected);
+                WriteEnum(value, writer, t);
+
+                return;
+            }
+
+            // Check for simple types
+            if (writer.TryWriteSimpleStruct(value))
+                return;
+
+            object obj = value;
+
+            IExternalSerializer serializer;
+            if (sm.TryLookupExternalSerializer(t, out serializer))
+            {
+                writer.WriteTypeHeader(t, expected);
+                serializer.Serialize(obj, context, expected);
+                return;
+            }
+
+            Serializer ser = sm.GetSerializer(t);
+            if (ser != null)
+            {
+                writer.WriteTypeHeader(t, expected);
+                ser(obj, context, expected);
+                return;
+            }
+
+            if (sm.TryLookupKeyedSerializer(t, out var keyedSerializer))
+            {
+                writer.Write((byte)SerializationTokenType.KeyedSerializer);
+                writer.Write((byte)keyedSerializer.SerializerId);
+                keyedSerializer.Serialize(obj, context, expected);
+                return;
+            }
+
+            if (sm.fallbackSerializer.IsSupportedType(t))
+            {
+                sm.FallbackSerializer(obj, context, expected);
+                return;
+            }
+
+            throw new ArgumentException(
+                "No serializer found for object of type " + t.OrleansTypeKeyString() + " from assembly " + t.Assembly.FullName
+                + ". Perhaps you need to mark it [Serializable] or define a custom serializer for it?");
+        }
+
         private static void WriteEnum(object obj, IBinaryTokenStreamWriter stream, Type type)
         {
             var t = Enum.GetUnderlyingType(type).TypeHandle;

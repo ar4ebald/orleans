@@ -117,9 +117,16 @@ namespace Orleans.Serialization
         {
             var list = (List<T>)obj;
             context.StreamWriter.Write(list.Count);
-            foreach (var element in list)
+
+            if (typeof(T).IsValueType)
             {
-                SerializationManager.SerializeInner(element, context, typeof(T));
+                foreach (var element in list)
+                    SerializationManager.SerializeInnerValueType(element, context, typeof(T));
+            }
+            else
+            {
+                foreach (var element in list)
+                    SerializationManager.SerializeInner(element, context, typeof(T));
             }
         }
 
